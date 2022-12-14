@@ -1,7 +1,0 @@
-parameters:
-    level: max
-    paths:
-        - src/
-        - tests/
-    ignoreErrors:
-        - '~^Cannot access offset ''(variables|map)'' on array\|object\|null.$~'

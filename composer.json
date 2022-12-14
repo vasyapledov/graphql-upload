@@ -7,7 +7,7 @@
         "check": [
             "php-cs-fixer fix --ansi --dry-run --diff",
             "phpunit --color=always",
-            "phpstan analyse --ansi"
+            "phpstan analyse -c phpstan.neon --level max src tests"
         ],
         "fix": [
             "php-cs-fixer fix --ansi"
@@ -24,16 +24,15 @@
         }
     },
     "require": {
-        "php": "^8.1",
-        "ext-json": "*",
+        "php": "^7.1 || ^8.0",
         "psr/http-server-middleware": "^1.0",
-        "webonyx/graphql-php": "^14.11"
+        "webonyx/graphql-php": "^0.12.0"
     },
-    "license": "MIT",
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "@stable",
-        "laminas/laminas-diactoros": "@stable",
-        "phpstan/phpstan": "@stable",
-        "phpunit/phpunit": "@stable"
-    }
+        "friendsofphp/php-cs-fixer": "^2.9",
+        "zendframework/zend-diactoros": "^1.7",
+        "phpunit/phpunit": "@stable",
+        "phpstan/phpstan": "^0.9.2"
+    },
+    "license": "MIT"
 }

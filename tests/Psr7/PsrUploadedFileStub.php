@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLTests\Upload\Psr7;
 
-use Laminas\Diactoros\UploadedFile;
+use Zend\Diactoros\UploadedFile;
 
 class PsrUploadedFileStub extends UploadedFile
 {

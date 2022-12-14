@@ -1,6 +1,6 @@
 # GraphQL Upload
 
-[![Build Status](https://github.com/ecodev/graphql-upload/workflows/main/badge.svg)](https://github.com/ecodev/graphql-upload/actions)
+[![Build Status](https://travis-ci.org/Ecodev/graphql-upload.svg?branch=master)](https://travis-ci.org/Ecodev/graphql-upload)
 [![Code Quality](https://scrutinizer-ci.com/g/Ecodev/graphql-upload/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Ecodev/graphql-upload/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/Ecodev/graphql-upload/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Ecodev/graphql-upload/?branch=master)
 [![Total Downloads](https://poser.pugx.org/ecodev/graphql-upload/downloads.png)](https://packagist.org/packages/ecodev/graphql-upload)
@@ -8,7 +8,7 @@
 [![License](https://poser.pugx.org/ecodev/graphql-upload/license.png)](https://packagist.org/packages/ecodev/graphql-upload)
 [![Join the chat at https://gitter.im/Ecodev/graphql-upload](https://badges.gitter.im/Ecodev/graphql-upload.svg)](https://gitter.im/Ecodev/graphql-upload)
 
-A [PSR-15](https://www.php-fig.org/psr/psr-15/) middleware to support file uploads in GraphQL. It implements
+A middleware to support file uploads in GraphQL. It implements
 [the multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec)
 for [webonyx/graphql-php](https://github.com/webonyx/graphql-php).
 
@@ -23,11 +23,11 @@ composer require ecodev/graphql-upload
 
 ### Configure as middleware
 
-In Laminas Mezzio, it would typically be in `config/routes.php` something like:
+In Zend Expressive, it would typically be in `config/routes.php` something like:
 
 ```php
 use Application\Action\GraphQLAction;
-use Mezzio\Helper\BodyParams\BodyParamsMiddleware;
+use Zend\Expressive\Helper\BodyParams\BodyParamsMiddleware;
 use GraphQL\Upload\UploadMiddleware;
 
 $app->post('/graphql', [
@@ -37,26 +37,16 @@ $app->post('/graphql', [
 ], 'graphql');
 ```
 
-#### Other frameworks
-
-This lib is an implementation of PSR-15, so it can be used with any
-framework supporting PSR-15. For specific configuration instructions, refer
-to your framework documentation.
-
-If your framework does not support PSR-15 middleware, you will probably
-need some kind of bridge. Again, refer to your framework for specific instructions.
-Or else, you could use the direct usage below for manual integration.
-
 ### Direct usage
 
-If you don't use middleware, it can be called directly like so:
+Or if you don't use middleware, it can be called directly like so:
 
 ```php
 <?php
 
 use GraphQL\Server\StandardServer;
 use GraphQL\Upload\UploadMiddleware;
-use Laminas\Diactoros\ServerRequestFactory;
+use Zend\Diactoros\ServerRequestFactory;
 
 // Create request (or get it from a framework)
 $request = ServerRequestFactory::fromGlobals();
@@ -117,5 +107,5 @@ $schema = new Schema([
 ## Limitations
 
 - It only works with PSR-7 requests. If you were not using PSR-7 yet,
-[laminas-diactoros](https://github.com/laminas/laminas-diactoros) is one of many 
+[zend-diactoros](https://github.com/zendframework/zend-diactoros) is one of many 
 implementation that could be used to create PSR-7 requests.

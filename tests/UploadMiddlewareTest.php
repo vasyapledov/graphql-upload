@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace GraphQLTests\Upload;
 
-use GraphQL\Error\DebugFlag;
 use GraphQL\Error\InvariantViolation;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Server\RequestError;
@@ -15,21 +14,22 @@ use GraphQL\Type\Schema;
 use GraphQL\Upload\UploadMiddleware;
 use GraphQL\Upload\UploadType;
 use GraphQLTests\Upload\Psr7\PsrUploadedFileStub;
-use Laminas\Diactoros\Response;
-use Laminas\Diactoros\ServerRequest;
-use Laminas\Diactoros\UploadedFile;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use stdClass;
+use Zend\Diactoros\Response;
+use Zend\Diactoros\ServerRequest;
 
 class UploadMiddlewareTest extends TestCase
 {
-    private UploadMiddleware $middleware;
+    /**
+     * @var UploadMiddleware
+     */
+    private $middleware;
 
-    protected function setUp(): void
+    public function setUp(): void
     {
         $this->middleware = new UploadMiddleware();
     }
@@ -38,8 +38,11 @@ class UploadMiddlewareTest extends TestCase
     {
         $response = new Response();
         $handler = new class($response) implements RequestHandlerInterface {
-            public function __construct(private readonly ResponseInterface $response)
+            private $response;
+
+            public function __construct(ResponseInterface $response)
             {
+                $this->response = $response;
             }
 
             public function handle(ServerRequestInterface $request): ResponseInterface
@@ -49,12 +52,12 @@ class UploadMiddlewareTest extends TestCase
         };
 
         $middleware = $this->getMockBuilder(UploadMiddleware::class)
-            ->onlyMethods(['processRequest'])
+            ->setMethods(['processRequest'])
             ->getMock();
 
         // The request should be forward to processRequest()
         $request = new ServerRequest();
-        $middleware->expects(self::once())->method('processRequest')->with($request);
+        $middleware->expects($this->once())->method('processRequest')->with($request);
 
         $actualResponse = $middleware->process($request, $handler);
         self::assertSame($response, $actualResponse, 'should return the mocked response');
@@ -141,10 +144,10 @@ class UploadMiddlewareTest extends TestCase
         $request = new ServerRequest();
         $request = $request
             ->withHeader('content-type', ['multipart/form-data'])
-            ->withParsedBody(new stdClass());
+            ->withParsedBody('foo');
 
         $this->expectException(RequestError::class);
-        $this->expectExceptionMessage('GraphQL Server expects JSON object or array, but got []');
+        $this->expectExceptionMessage('GraphQL Server expects JSON object or array, but got "foo"');
         $this->middleware->processRequest($request);
     }
 
@@ -153,7 +156,7 @@ class UploadMiddlewareTest extends TestCase
         $request = new ServerRequest();
         $request = $request
             ->withHeader('content-type', ['application/json'])
-            ->withParsedBody(new stdClass());
+            ->withParsedBody('foo');
 
         $processedRequest = $this->middleware->processRequest($request);
         self::assertSame($request, $processedRequest);
@@ -170,34 +173,6 @@ class UploadMiddlewareTest extends TestCase
 
         $this->expectException(RequestError::class);
         $this->expectExceptionMessage('The request must define a `map`');
-        $this->middleware->processRequest($request);
-    }
-
-    public function testRequestWithMapThatIsNotArrayShouldThrows(): void
-    {
-        $request = $this->createRequest('{my query}', [], [], [], 'op');
-
-        // Replace map with json that is valid but no array
-        $body = $request->getParsedBody();
-        $body['map'] = json_encode('foo');
-        $request = $request->withParsedBody($body);
-
-        $this->expectException(RequestError::class);
-        $this->expectExceptionMessage('The `map` key must be a JSON encoded array');
-        $this->middleware->processRequest($request);
-    }
-
-    public function testRequestWithMapThatIsNotValidJsonShouldThrows(): void
-    {
-        $request = $this->createRequest('{my query}', [], [], [], 'op');
-
-        // Replace map with invalid json
-        $body = $request->getParsedBody();
-        $body['map'] = 'this is not json';
-        $request = $request->withParsedBody($body);
-
-        $this->expectException(RequestError::class);
-        $this->expectExceptionMessage('The `map` key must be a JSON encoded array');
         $this->middleware->processRequest($request);
     }
 
@@ -227,14 +202,9 @@ class UploadMiddlewareTest extends TestCase
         $response = $server->executePsrRequest($processedRequest);
 
         $expected = ['testUpload' => 'Uploaded file was image.jpg (image/jpeg) with description: foo bar'];
-        self::assertSame($expected, $response->data);
+        $this->assertSame($expected, $response->data);
     }
 
-    /**
-     * @param mixed[] $variables
-     * @param string[][] $map
-     * @param UploadedFile[] $files
-     */
     private function createRequest(string $query, array $variables, array $map, array $files, string $operation): ServerRequestInterface
     {
         $request = new ServerRequest();
@@ -256,13 +226,8 @@ class UploadMiddlewareTest extends TestCase
 
     private function createServer(): StandardServer
     {
-        $all = DebugFlag::INCLUDE_DEBUG_MESSAGE
-            | DebugFlag::INCLUDE_TRACE
-            | DebugFlag::RETHROW_INTERNAL_EXCEPTIONS
-            | DebugFlag::RETHROW_UNSAFE_EXCEPTIONS;
-
         return new StandardServer([
-            'debugFlag' => $all,
+            'debug' => true,
             'schema' => new Schema([
                 'query' => new ObjectType([
                     'name' => 'Query',
